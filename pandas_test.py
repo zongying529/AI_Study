@@ -203,5 +203,64 @@ ts = pd.Series(np.random.randint(0, 500, len(rng)), index=rng)
 #  将数据按‌5分钟‌（300秒）为区间进行下采样, 300秒＞100秒，故只有一个值
 print(ts.resample("5Min").sum())
 
-# Series.tz_localize() 本地化时区
-# Series.tz_convert() 转化为另一个时区
+# Series.tz_localize() 本地化时区 Series.tz_convert() 转化为另一个时区
+
+## 类别分类
+df = pd.DataFrame(
+     {"id": [1, 2, 3, 4, 5, 6], 
+      "raw_grade": ["a", "b", "b", "a", "a", "e"]}
+     ) 
+# Series.astype() 转换为分类数据类型
+df["grade"] = df["raw_grade"].astype("category")
+print(df["grade"])
+
+# Series.cat.rename_categories() 类别重命名
+new_categories = ["very good", "good", "very bad"]
+df["grade"] = df["grade"].cat.rename_categories(new_categories)
+print(df['grade'])
+
+# Series.cat.set_categories() 重新排序类别并同时添加缺失类别(不会影响原本分类)
+df["grade"] = df["grade"].cat.set_categories(
+    ["very bad", "bad", "medium", "good", "very good"]
+)
+print(df)
+
+# Series.sort_values(by="") 按照设定类别的顺序排序
+df.sort_values(by="grade")
+print(df)
+
+# Series.groupby(observed=False) 按分类列分组还显示空类,统计分类后每类元素个数
+print(df.groupby("grade", observed=False).size())
+
+## 绘图
+import matplotlib.pyplot as plt
+
+# 绘制时间序列图形，ts.cumsum()为累积值，绘图必须使用show()方法才能展现出来图。
+ts = pd.Series(np.random.randn(1000), index=pd.date_range('1/1/2000', periods=1000))
+ts = ts.cumsum()
+ts.plot()
+
+# 绘制带标签的所有列
+df = pd.DataFrame(np.random.randn(1000, 4), index=ts.index,
+                   columns=['A', 'B', 'C', 'D'])
+df = df.cumsum()
+df.plot()
+# plt.figure() 隐式建立一个图像
+plt.legend(loc='best')
+plt.show() 
+
+### 获取数据输入/输出
+## CSV
+df.to_csv('foo.csv') # 写入csv
+print(pd.read_csv('foo.csv'))  # 读取csv
+
+## Excel
+df.to_excel('foo.xlsx', sheet_name='Sheet1') # 写入Excel
+print(pd.read_excel('foo.xlsx', 'Sheet1', index_col=None, na_values=['NA'])) # 读取Excel
+
+
+# 如果你对 Series 或 DataFrame 执行布尔运算，可能会报错
+# ValueError: The truth value of a Series is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all().
+# 从以下网址获取详细信息
+# https://link.zhihu.com/?target=http%3A//pandas.pydata.org/pandas-docs/version/0.20/basics.html%23basics-compare
+# https://link.zhihu.com/?target=http%3A//pandas.pydata.org/pandas-docs/version/0.20/gotchas.html%23gotchas

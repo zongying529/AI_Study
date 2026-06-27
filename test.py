@@ -11,3 +11,5 @@ if torch.cuda.is_available():
     
 else:
     print("CUDA is not available")
+    
+# 生成 requirement.txt  pip freeze > requirement.txt
