@@ -131,7 +131,7 @@ print(df4['E'].value_counts())
 # 合并
 # concat() 方法用于将多个 DataFrame 或 Series 沿指定轴连接在一起（按行）
 
-# merge() 方法用于根据指定的键将两个 DataFrame 合并在一起（按列全连接）
+# merge() 方法用于根据指定的键将两个 DataFrame 合并在一起（默认内连接）
 left = pd.DataFrame({'key': ['K0', 'K1', 'K2', 'K3'],
                      'A': ['A0', 'A1', 'A2', 'A3'],
                      'B': ['B0', 'B1', 'B2', 'B3']})
@@ -139,6 +139,10 @@ right = pd.DataFrame({'key': ['K0', 'K1', 'K2', 'K3'],
                       'C': ['C0', 'C1', 'C2', 'C3'],
                       'D': ['D0', 'D1', 'D2', 'D3']})
 print(pd.merge(left, right, on='key'))  # 按key列合并 如果有多个键，则可以使用 on 参数传递一个列表
+
+# 左连接‌（保留所有订单，即使找不到对应用户）：how='left'
+# ‌右连接‌（保留所有用户，即使没有订单）：how='right'
+# ‌外连接‌（保留所有记录）：how='outer' ‌‌
 
 # groupby() 将数据分组，对每个组独立应用函数，将结果合成
 df = pd.DataFrame(
