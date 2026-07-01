@@ -160,6 +160,128 @@ customer = pd.DataFrame({
     'age': [20, np.nan, np.nan, 35, 40],
     'city': ['北京', '上海', '上海', None, '广州']
 })
+customer = customer.drop_duplicates(subset='id', keep='first')
+print(customer.isnull().sum())
+customer['age'] = customer['age'].fillna(customer['age'].mean())
+customer['city'] = customer['city'].fillna('未知')
+print(customer)
 
+# 12. 透视表 pivot_table  【中等】
+# 题目：给定商品销售数据 product_sales。
+# 要求：使用 pivot_table 统计不同地区、不同商品的销售总额；缺失组合填充为 0；添加行列合计。
+product_sales = pd.DataFrame({
+    'region': ['华东', '华东', '华南', '华南', '华北'],
+    'product': ['电脑', '手机', '电脑', '手机', '电脑'],
+    'amount': [5000, 3000, 4500, 3800, 5200]
+})
+result = pd.pivot_table(
+    product_sales,
+    values='amount',
+    index='region',
+    columns='product',
+    aggfunc='sum',
+    fill_value=0,
+    margins=True,
+    margins_name='总计'
+)
+print(result)
 
+# 13. 字符串处理与 apply  【中等】
+# 题目：给定账号数据 accounts。
+# 要求：去除 username 前后的空格；将 email 统一转换为小写；从 email 中提取邮箱域名；新增 level 字段，score >= 90 为 A，80-89 为 B，低于 80 为 C。
+accounts = pd.DataFrame({
+    'username': [' alice ', 'BOB', ' cindy'],
+    'email': ['Alice@QQ.COM', 'bob@163.com', 'Cindy@GMAIL.COM'],
+    'score': [95, 82, 76]
+})
+accounts['username'] = accounts['username'].str.strip()
+accounts['email'] = accounts['email'].str.lower()
+accounts['domain'] = accounts['email'].str.split('@').str[-1]
+def assign_level(score):
+    if score >= 90:
+        return 'A'
+    elif score >= 80:
+        return 'B'
+    else:
+        return 'C'
+accounts['level'] = accounts['score'].apply(assign_level)
+print(accounts)
 
+# 14. 多文件数据拼接 concat  【中等】
+# 题目：假设 jan、feb、mar 分别表示 1 月、2 月、3 月销售数据，字段完全相同。
+# 要求：将三个月数据纵向拼接；新增 month 字段标识月份；计算每个月销售总额；计算所有月份中单笔最高销售记录。
+jan = pd.DataFrame({'order_id': [1, 2], 'amount': [100, 300]})
+feb = pd.DataFrame({'order_id': [3, 4], 'amount': [200, 500]})
+mar = pd.DataFrame({'order_id': [5, 6], 'amount': [150, 450]})
+
+jan['month'] = '一月'
+feb['month'] = '二月'
+mar['month'] = '三月'
+result = pd.concat([jan, feb, mar], axis=0, ignore_index=True)
+monthly_totals = result.groupby('month')['amount'].sum().reset_index()
+monthly_totals.columns = ['month', 'total_amount']
+print(result)
+print(monthly_totals)
+print(result.loc[result['amount'].idxmax()])
+
+# 15. 综合数据分析：直播数据分析  【综合】
+# 题目：给定一份直播场次数据 live。
+# 要求：计算每场直播时长；按 category 统计总观看人数、平均弹幕数、平均礼物数；找出观看人数最高的一场；筛选出时长超过 2 小时且观看人数超过 5000 的场次；最后生成一个按日期升序排列的汇总表。
+live = pd.DataFrame({
+    'date': ['2026-06-01', '2026-06-02', '2026-06-03', '2026-06-04'],
+    'category': ['杂谈', '游戏', '杂谈', '游戏'],
+    'start': ['20:30', '20:30', '20:00', '21:00'],
+    'end': ['22:30', '23:10', '22:20', '23:00'],
+    'viewers': [4800, 6200, 5100, 7000],
+    'danmaku': [350, 520, 410, 680],
+    'gifts': [120, 260, 180, 310]
+})
+live['start'] = pd.to_datetime(live['date'] + ' ' + live['start'])
+live['end'] = pd.to_datetime(live['date'] + ' ' + live['end'])
+live['duration_minutes'] = (live['end'] - live['start']).dt.total_seconds() / 60
+live['duration_hours'] = live['duration_minutes'] / 60
+
+category_stats = live.groupby('category').agg(
+    total_viewers=('viewers', 'sum'),
+    avg_danmaku=('danmaku', 'mean'),
+    avg_gifts=('gifts', 'mean')
+).reset_index()
+print("===各分类统计信息===")
+print(category_stats)
+
+print("===观看人数最高的一场===")
+print(live.loc[live['viewers'].idxmax()])
+
+print("===筛选出时长超过 2 小时且观看人数超过 5000 的场次===")
+filtered_live = live[(live['duration_hours'] > 2) & (live['viewers'] > 5000)]
+print(filtered_live)
+
+print("===按日期升序排列的汇总表===")
+summary_table = live.sort_values('date')
+print(summary_table)
+
+# 生成柱状图
+import matplotlib.pyplot as plt
+plt.rcParams['font.sans-serif'] = ['SimHei'] 
+plt.rcParams['axes.unicode_minus'] = False
+fig, ax = plt.subplots(figsize=(10, 6))
+
+x = summary_table['date']
+y1 = summary_table['viewers']
+y2 = summary_table['danmaku']
+y3 = summary_table['gifts']
+
+x_pos = np.arange(len(x))
+width=0.2
+
+bar1 = ax.bar(x_pos - width/2, y1, width=0.1, label='观看人数', align='edge')
+bar2 = ax.bar(x_pos, y2, width=0.1, label='弹幕数', align='edge')
+bar3 = ax.bar(x_pos + width/2, y3, width=0.1, label='礼物数', align='edge')
+
+ax.set_xticks(x_pos)
+ax.set_xticklabels(x + ' + ' + summary_table['category'], ha='center')
+
+ax.set_xlabel('日期 + 内容')
+ax.set_ylabel('数量')
+plt.title('直播数据分析')
+plt.show()
